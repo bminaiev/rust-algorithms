@@ -27,7 +27,7 @@ impl Random {
 
 #[cfg(test)]
 mod tests {
-    use crate::lib::utils::random::Random;
+    use super::*;
 
     #[test]
     fn distribution() {

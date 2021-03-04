@@ -35,7 +35,7 @@ impl Fenwick {
 #[cfg(test)]
 mod tests {
     use rand::prelude::*;
-    use crate::lib::seg_trees::fenwick::Fenwick;
+    use super::*;
 
     #[test]
     fn stress() {
