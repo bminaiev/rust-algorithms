@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 trait LazySegTreeSpec {
     type Elem: Clone;
     type ToPush: Clone;
@@ -28,6 +30,29 @@ impl LazySegTreeSpec for PlusSum {
 
     fn apply_push(e: &Self::Elem, p: &Self::ToPush, l: usize, r: usize) -> Self::Elem {
         e + p * (r - l) as i64
+    }
+}
+
+enum PlusMin {}
+
+impl LazySegTreeSpec for PlusMin {
+    type Elem = i64;
+    type ToPush = i64;
+
+    fn id() -> Self::Elem {
+        std::i64::MAX
+    }
+
+    fn join_pushes(p1: &Self::ToPush, p2: &Self::ToPush) -> Self::ToPush {
+        p1 + p2
+    }
+
+    fn join_elems(e1: &Self::Elem, e2: &Self::Elem) -> Self::Elem {
+        min(*e1, *e2)
+    }
+
+    fn apply_push(e: &Self::Elem, p: &Self::ToPush, _l: usize, _r: usize) -> Self::Elem {
+        e + p
     }
 }
 
@@ -132,7 +157,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn stress() {
+    fn stress_plus_sum() {
         const MAX_N: usize = 50;
         const MAX_VAL: i32 = 1000_000;
         const TESTS_N: usize = 300;
@@ -156,6 +181,47 @@ mod tests {
                     }
                     let sum_from_tree = tree.get(left, right);
                     let sum_slow = slow_vec[left..right].iter().sum();
+                    assert_eq!(sum_from_tree, sum_slow);
+                } else {
+                    let change = rnd.gen_range(0..MAX_VAL) as i64;
+                    if DEBUG {
+                        eprintln!("add [{}..{}) += {}", left, right, change);
+                    }
+                    tree.apply(left, right, change);
+                    for v in &mut slow_vec[left..right] {
+                        *v += change;
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn stress_plus_min() {
+        const MAX_N: usize = 50;
+        const MAX_VAL: i32 = 1000_000;
+        const TESTS_N: usize = 300;
+        const OPS_IN_TEST: usize = 100;
+        const DEBUG: bool = false;
+
+        for t in 0..TESTS_N {
+            let mut rnd = StdRng::seed_from_u64(787788 + t as u64);
+            let n: usize = rnd.gen_range(1..=MAX_N);
+            let init_val = 123;
+            let mut tree = LazySegTree::<PlusMin>::new(init_val, n);
+            let mut slow_vec = vec![init_val; n];
+            if DEBUG {
+                eprintln!("start test {}, n = {}", t, n);
+            }
+            for _ in 0..OPS_IN_TEST {
+                let left = rnd.gen_range(0..n);
+                let right = rnd.gen_range((left + 1)..=n);
+                if rnd.gen_bool(0.5) {
+                    if DEBUG {
+                        eprintln!("check sum for [{}..{})", left, right);
+                    }
+                    let sum_from_tree = tree.get(left, right);
+                    let sum_slow = *slow_vec[left..right].iter().min().unwrap();
                     assert_eq!(sum_from_tree, sum_slow);
                 } else {
                     let change = rnd.gen_range(0..MAX_VAL) as i64;
