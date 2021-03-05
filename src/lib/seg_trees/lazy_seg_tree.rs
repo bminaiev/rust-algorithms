@@ -218,7 +218,7 @@ mod tests {
                 let right = rnd.gen_range((left + 1)..=n);
                 if rnd.gen_bool(0.5) {
                     if DEBUG {
-                        eprintln!("check sum for [{}..{})", left, right);
+                        eprintln!("check min for [{}..{})", left, right);
                     }
                     let sum_from_tree = tree.get(left, right);
                     let sum_slow = *slow_vec[left..right].iter().min().unwrap();
