@@ -5,9 +5,11 @@ trait LazySegTreeSpec {
     type ToPush: Clone;
 
     fn id() -> Self::Elem;
-    fn join_pushes(p1: &Self::ToPush, p2: &Self::ToPush) -> Self::ToPush;
+    fn join_pushes(p1: &mut Self::ToPush, p2: &Self::ToPush);
     fn join_elems(e1: &Self::Elem, e2: &Self::Elem) -> Self::Elem;
     fn apply_push(e: &Self::Elem, p: &Self::ToPush, l: usize, r: usize) -> Self::Elem;
+    // TODO: is it possible to make this constant?
+    fn no_push() -> Self::ToPush;
 }
 
 enum PlusSum {}
@@ -20,8 +22,8 @@ impl LazySegTreeSpec for PlusSum {
         0
     }
 
-    fn join_pushes(p1: &Self::ToPush, p2: &Self::ToPush) -> Self::ToPush {
-        p1 + p2
+    fn join_pushes(p1: &mut Self::ToPush, p2: &Self::ToPush) {
+        *p1 += p2;
     }
 
     fn join_elems(e1: &Self::Elem, e2: &Self::Elem) -> Self::Elem {
@@ -30,6 +32,10 @@ impl LazySegTreeSpec for PlusSum {
 
     fn apply_push(e: &Self::Elem, p: &Self::ToPush, l: usize, r: usize) -> Self::Elem {
         e + p * (r - l) as i64
+    }
+
+    fn no_push() -> Self::ToPush {
+        0
     }
 }
 
@@ -43,8 +49,8 @@ impl LazySegTreeSpec for PlusMin {
         std::i64::MAX
     }
 
-    fn join_pushes(p1: &Self::ToPush, p2: &Self::ToPush) -> Self::ToPush {
-        p1 + p2
+    fn join_pushes(p1: &mut Self::ToPush, p2: &Self::ToPush) {
+        *p1 += p2;
     }
 
     fn join_elems(e1: &Self::Elem, e2: &Self::Elem) -> Self::Elem {
@@ -54,21 +60,26 @@ impl LazySegTreeSpec for PlusMin {
     fn apply_push(e: &Self::Elem, p: &Self::ToPush, _l: usize, _r: usize) -> Self::Elem {
         e + p
     }
+
+    fn no_push() -> Self::ToPush {
+        0
+    }
 }
 
 #[allow(dead_code)]
 struct LazySegTree<T: LazySegTreeSpec> {
     values: Vec<T::Elem>,
-    to_push: Vec<Option<T::ToPush>>,
+    to_push: Vec<T::ToPush>,
     n: usize,
+    relaxations: u64,
 }
 
 impl<T: LazySegTreeSpec> LazySegTree<T> {
     #[allow(dead_code)]
     fn new(init_val: T::Elem, n: usize) -> Self {
         let values = vec![init_val; n * 4];
-        let to_push = vec![None; n * 4];
-        let mut res = LazySegTree { values, to_push, n };
+        let to_push = vec![T::no_push(); n * 4];
+        let mut res = LazySegTree { values, to_push, n, relaxations: 0 };
         res.init(0, 0, n);
         res
     }
@@ -80,28 +91,23 @@ impl<T: LazySegTreeSpec> LazySegTree<T> {
         let mid = (l + r) >> 1;
         self.init(v * 2 + 1, l, mid);
         self.init(v * 2 + 2, mid, r);
-        self.recompute_res(v, l, r);
+        self.recompute_res(v);
     }
 
     fn join_push(&mut self, v: usize, new_push: &T::ToPush) {
-        self.to_push[v] = match &self.to_push[v] {
-            None => Some(new_push.clone()),
-            Some(old_push) => Some(T::join_pushes(old_push, &new_push))
-        };
+        T::join_pushes(&mut self.to_push[v], new_push);
     }
 
-    fn relax(&mut self, v: usize, l: usize, r: usize) {
-        if let Some(change) = self.to_push[v].clone() {
-            self.join_push(v * 2 + 1, &change);
-            self.join_push(v * 2 + 2, &change);
-        }
-        self.to_push[v] = None;
-        self.recompute_res(v, l, r);
+    fn relax(&mut self, v: usize) {
+        self.relaxations += 1;
+        let push = self.to_push[v].clone();
+        self.to_push[v] = T::no_push();
+        T::join_pushes(&mut self.to_push[v * 2 + 1], &push);
+        T::join_pushes(&mut self.to_push[v * 2 + 2], &push);
     }
 
-    fn recompute_res(&mut self, v: usize, l: usize, r: usize) {
-        let m = (l + r) >> 1;
-        self.values[v] = T::join_elems(&self.get_node(v * 2 + 1, l, m), &self.get_node(v * 2 + 2, m, r));
+    fn recompute_res(&mut self, v: usize) {
+        self.values[v] = T::join_elems(&self.get_node(v * 2 + 1), &self.get_node(v * 2 + 2));
     }
 
     fn apply_internal(&mut self, v: usize, need_l: usize, need_r: usize, vertex_l: usize, vertex_r: usize, change: &T::ToPush) {
@@ -110,24 +116,22 @@ impl<T: LazySegTreeSpec> LazySegTree<T> {
         }
         if need_l <= vertex_l && need_r >= vertex_r {
             self.join_push(v, &change);
+            T::apply_push(&self.values[v], &change, vertex_l, vertex_r);
             return;
         }
-        self.relax(v, vertex_l, vertex_r);
+        self.relax(v);
         let mid = (vertex_l + vertex_r) >> 1;
         self.apply_internal(v * 2 + 1, need_l, need_r, vertex_l, mid, change);
         self.apply_internal(v * 2 + 2, need_l, need_r, mid, vertex_r, change);
-        self.recompute_res(v, vertex_l, vertex_r);
+        self.recompute_res(v);
     }
 
     fn apply(&mut self, l: usize, r: usize, change: T::ToPush) {
         self.apply_internal(0, l, r, 0, self.n, &change);
     }
 
-    fn get_node(&mut self, v: usize, l: usize, r: usize) -> T::Elem {
-        return match &self.to_push[v] {
-            None => self.values[v].clone(),
-            Some(push) => T::apply_push(&self.values[v], push, l, r)
-        };
+    fn get_node(&mut self, v: usize) -> T::Elem {
+        self.values[v].clone()
     }
 
     fn get_internal(&mut self, v: usize, need_l: usize, need_r: usize, vertex_l: usize, vertex_r: usize) -> T::Elem {
@@ -136,9 +140,9 @@ impl<T: LazySegTreeSpec> LazySegTree<T> {
             return T::id();
         }
         if need_l <= vertex_l && need_r >= vertex_r {
-            return self.get_node(v, vertex_l, vertex_r);
+            return self.get_node(v);
         }
-        self.relax(v, vertex_l, vertex_r);
+        self.relax(v);
         let m = (vertex_l + vertex_r) >> 1;
         let ans_l = self.get_internal(v * 2 + 1, need_l, need_r, vertex_l, m);
         let ans_r = self.get_internal(v * 2 + 2, need_l, need_r, m, vertex_r);
@@ -237,4 +241,32 @@ mod tests {
         }
     }
 
+
+    #[test]
+    fn stress_speed() {
+        const MAX_N: usize = 1_000_000;
+        const MAX_VAL: i32 = 1_000_000;
+        const TESTS_N: usize = 10;
+        const OPS_IN_TEST: usize = 1_000_000;
+
+        for t in 0..TESTS_N {
+            let mut rnd = StdRng::seed_from_u64(787788 + t as u64);
+            let now = std::time::Instant::now();
+            let n: usize = MAX_N;
+            let init_val = 123;
+            let mut tree = LazySegTree::<PlusMin>::new(init_val, n);
+            for _ in 0..OPS_IN_TEST {
+                let left = rnd.gen_range(0..n);
+                let right = rnd.gen_range((left + 1)..=n);
+                if rnd.gen_bool(0.5) {
+                    tree.get(left, right);
+                } else {
+                    let change = rnd.gen_range(0..MAX_VAL) as i64;
+                    tree.apply(left, right, change);
+                }
+            }
+            eprintln!("total relax: {}", tree.relaxations);
+            eprintln!("done with test in {}ms", now.elapsed().as_millis());
+        }
+    }
 }
