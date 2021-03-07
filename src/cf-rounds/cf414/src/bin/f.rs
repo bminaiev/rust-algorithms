@@ -1,6 +1,5 @@
 use std::io;
-use std::io::{Write, BufWriter, StdoutLock};
-
+use std::io::Write;
 
 pub fn main() {
     let mut sc = Scanner::default();
@@ -138,12 +137,12 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
     }
 
     fn push(&mut self, v: usize, l: usize, r: usize) {
-        let m = (l + r) >> 1;
-        let vr = v + ((m - l) << 1);
-        let to_push = self.tree[v].clone();
-        T::push(&mut self.tree[v + 1], &to_push);
-        T::push(&mut self.tree[vr], &to_push);
-        T::clear_push(&mut self.tree[v]);
+        let as_slices = self.tree.split_at_mut(v + 1);
+        let to_push = as_slices.0.last_mut().unwrap();
+        let right = as_slices.1;
+        T::push(&mut right[0], &to_push);
+        T::push(&mut right[((r - l) & !1) - 1], &to_push);
+        T::clear_push(to_push);
     }
 
     fn get_(&mut self, v: usize, l: usize, r: usize, ql: usize, qr: usize) -> T {
