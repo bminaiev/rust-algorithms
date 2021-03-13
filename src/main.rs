@@ -1,12 +1,12 @@
 use std::io;
 use std::io::Write;
 
-/**
+/**************************************************
 
-Actual solution is in the bottom
+    START OF TEMPLATE CODE
 
-*/
-
+ *************************************************/
+#[allow(unused_macros)]
 macro_rules! dbg {
     ($first_val:expr, $($val:expr),+ $(,)?) => {
         eprint!("[{}:{}] {} = {:?}",
@@ -74,6 +74,4 @@ pub fn main() {
     let stdout = io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
     let mut sc = Scanner::default();
-
-
 }
