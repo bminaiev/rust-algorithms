@@ -136,9 +136,9 @@ pub fn main() {
     }
 
     let mut order: Vec<_> = (0..n).collect();
-    order.sort_by(|id1, id2| -> Ordering {
-        for &col in result.iter() {
-            let cmp = a[*id1][col].cmp(&a[*id2][col]);
+    order.sort_by(|&id1, &id2| -> Ordering {
+        for &col in &result {
+            let cmp = a[id1][col].cmp(&a[id2][col]);
             if cmp != Ordering::Equal {
                 return cmp;
             }
