@@ -1,6 +1,8 @@
 use std::io;
 use std::io::Write;
 
+mod lib;
+
 /**************************************************
 
     START OF TEMPLATE CODE
@@ -74,4 +76,5 @@ pub fn main() {
     let stdout = io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
     let mut sc = Scanner::default();
+    writeln!(out, "{}", std::usize::MAX).unwrap();
 }

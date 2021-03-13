@@ -86,8 +86,37 @@ impl Hasher for IntHasher {
 
 type IntBuildHasher = BuildHasherDefault<IntHasher>;
 
+#[allow(dead_code)]
+struct Random {
+    state: usize
+}
+
+
+impl Random {
+    fn next(&mut self) -> usize {
+        let mut x = self.state;
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        self.state = x;
+        x
+    }
+
+    #[allow(dead_code)]
+    fn next_in_range(&mut self, from: usize, to: usize) -> usize {
+        assert!(from < to);
+        from + self.next() % (to - from)
+    }
+
+    #[allow(dead_code)]
+    fn new(seed: usize) -> Self {
+        Random { state: seed }
+    }
+}
+
 
 pub fn main() {
+    let start_time = std::time::Instant::now();
     let mut primes = vec![0; MAX];
     for i in 2..MAX {
         if primes[i] != 0 {
@@ -99,16 +128,22 @@ pub fn main() {
     }
     let mut by_val = vec![HashMap::<usize, usize, _>::with_hasher(IntBuildHasher::default()); MAX];
     let mut sc = Scanner::default();
-    let n: usize = sc.next();
-    let q: usize = sc.next();
+    let n: usize = 200_000;//sc.next();
+    let q: usize = 200_000;//sc.next();
     let mut res = 1;
+    let mut rnd = Random::new(787788);
     for i in 0..n {
-        res = mul(res, change(i, sc.next(), &primes, &mut by_val, n));
+        let val = rnd.next_in_range(0, 200_000);
+        res = mul(res, change(i, val, &primes, &mut by_val, n));
     }
+    let mut sum = 0;
     for _ in 0..q {
-        let pos = sc.next::<usize>() - 1;
-        let val: usize = sc.next();
+        let pos = rnd.next_in_range(0, n);
+        let val: usize = rnd.next_in_range(0, 200_000);
         res = mul(res, change(pos, val, &primes, &mut by_val, n));
-        println!("{}", res);
+        sum += res;
+        // println!("{}", res);
     }
+    let consumed = start_time.elapsed().as_millis();
+    dbg!(sum, consumed);
 }
