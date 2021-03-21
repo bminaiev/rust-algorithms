@@ -75,6 +75,6 @@ impl Scanner {
 pub fn main() {
     let stdout = io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
-    let mut sc = Scanner::default();
+    let mut _sc = Scanner::default();
     writeln!(out, "{}", std::usize::MAX).unwrap();
 }
