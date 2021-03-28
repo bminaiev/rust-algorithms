@@ -20,6 +20,11 @@ impl Random {
     }
 
     #[allow(dead_code)]
+    fn next_double(&mut self) -> f64 {
+        (self.next() as f64) / (std::usize::MAX as f64)
+    }
+
+    #[allow(dead_code)]
     fn new(seed: usize) -> Self {
         assert_ne!(seed, 0);
         Self {
@@ -48,5 +53,20 @@ mod tests {
         let min = *counts.iter().min().unwrap();
         let max = *counts.iter().max().unwrap();
         assert!((max - min) as f64 / (max as f64) < 0.05);
+    }
+
+    #[test]
+    fn double_mid() {
+        let mut rnd = Random::new(787788);
+        const CNT : usize = 10_000;
+        let mut sum = 0.0;
+        for _ in 0..CNT {
+            let val = rnd.next_double();
+            assert!(val >= 0.0);
+            assert!(val <= 1.0);
+            sum += val;
+        }
+        let average = sum / (CNT as f64);
+        assert!((average - 0.5).abs() < 0.05);
     }
 }
