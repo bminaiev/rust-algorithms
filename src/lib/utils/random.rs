@@ -21,7 +21,10 @@ impl Random {
 
     #[allow(dead_code)]
     fn new(seed: usize) -> Self {
-        Random { state: seed }
+        assert_ne!(seed, 0);
+        Self {
+            state: seed,
+        }
     }
 }
 
