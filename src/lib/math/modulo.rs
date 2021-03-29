@@ -68,6 +68,15 @@ mod modulo {
         }
     }
 
+    impl std::ops::AddAssign for Mod {
+        fn add_assign(&mut self, rhs: Self) {
+            self.0 += rhs.0;
+            if self.0 >= MODULO {
+                self.0 -= MODULO;
+            }
+        }
+    }
+
     impl std::ops::Sub for Mod {
         type Output = Mod;
 
@@ -81,6 +90,15 @@ mod modulo {
         }
     }
 
+    impl std::ops::SubAssign for Mod {
+        fn sub_assign(&mut self, rhs: Self) {
+            self.0 -= rhs.0;
+            if self.0 < 0 {
+                self.0 += MODULO;
+            }
+        }
+    }
+
     impl std::ops::Mul for Mod {
         type Output = Mod;
 
@@ -90,12 +108,24 @@ mod modulo {
         }
     }
 
+    impl std::ops::MulAssign for Mod {
+        fn mul_assign(&mut self, rhs: Self) {
+            self.0 = ((self.0 as i64) * (rhs.0 as i64) % (MODULO as i64)) as i32;
+        }
+    }
+
     impl std::ops::Div for Mod {
         type Output = Mod;
 
         fn div(self, rhs: Self) -> Self::Output {
             let rhs_inv = rhs.inv();
             self * rhs_inv
+        }
+    }
+
+    impl std::ops::DivAssign for Mod {
+        fn div_assign(&mut self, rhs: Self) {
+            *self *= rhs.inv();
         }
     }
 }
@@ -132,6 +162,15 @@ mod tests {
         let y = Mod::new(5);
         assert_eq!(format!("{}", x / y), "200000002");
         assert_eq!(format!("{:?}", x / y), "3/5");
+    }
+
+    #[test]
+    fn div_assign() {
+        let mut x = Mod::new(3);
+        let y = Mod::new(5);
+        x /= y;
+        assert_eq!(format!("{}", x), "200000002");
+        assert_eq!(format!("{:?}", x), "3/5");
     }
 
     #[test]
