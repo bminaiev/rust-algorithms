@@ -5,6 +5,12 @@ mod modulo {
     pub struct Mod(i32);
 
     impl Mod {
+        #[allow(unused)]
+        pub const ZERO: Self = Self(0);
+
+        #[allow(unused)]
+        pub const ONE: Self = Self(1);
+
         fn rev_rec(a: i32, m: i32) -> i32 {
             if a == 1 {
                 return a;
@@ -192,5 +198,11 @@ mod tests {
         assert_eq!(format!("{:?}", Mod::new(1)), "1");
         assert_eq!(format!("{:?}", Mod::new(3)), "3");
         assert_eq!(format!("{:?}", Mod::new(-5)), "-5");
+    }
+
+    #[test]
+    fn consts() {
+        let one = Mod::ONE - Mod::ZERO;
+        assert_eq!(format!("{:?}", one), "1");
     }
 }
