@@ -22,12 +22,31 @@ macro_rules! dbg {
     };
 }
 
-#[derive(Default)]
+enum InputSource {
+    Stdin,
+    FromFile(Vec<String>),
+}
+
 struct Scanner {
     buffer: Vec<String>,
+    input_source: InputSource,
 }
 
 impl Scanner {
+    #[allow(dead_code)]
+    fn new() -> Self {
+        Self { buffer: vec![], input_source: InputSource::Stdin }
+    }
+
+    #[allow(dead_code)]
+    fn new_file(filename: &str) -> Self {
+        let file = std::fs::read_to_string(filename).unwrap();
+        let mut lines: Vec<String> = file.lines().map(|line| String::from(line)).collect();
+        lines.reverse();
+        Self { buffer: vec![], input_source: InputSource::FromFile(lines) }
+    }
+
+
     #[allow(dead_code)]
     fn i64(&mut self) -> i64 {
         self.next::<i64>()
@@ -54,7 +73,14 @@ impl Scanner {
                 return token.parse().ok().expect("Failed parse");
             }
             let mut input = String::new();
-            std::io::stdin().read_line(&mut input).expect("Failed read");
+            match &mut self.input_source {
+                | InputSource::Stdin => { std::io::stdin().read_line(&mut input).expect("Failed read"); }
+                | InputSource::FromFile(lines) => {
+                    let line = lines.pop().unwrap();
+                    input = line;
+                }
+            }
+
             self.buffer = input.split_whitespace().rev().map(String::from).collect();
         }
     }
@@ -75,6 +101,6 @@ impl Scanner {
 pub fn main() {
     let stdout = io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
-    let mut _sc = Scanner::default();
+    let mut _sc = Scanner::new();
     writeln!(out, "{}", std::usize::MAX).unwrap();
 }
