@@ -110,16 +110,19 @@ fn vect_mul(a: &Point, b: &Point, c: &Point) -> i32 {
 struct BitSet(Vec<u64>);
 
 impl BitSet {
+    const BITS: usize = 6;
+    const M: usize = 1 << Self::BITS;
+
     fn create(n: usize) -> Self {
-        Self(vec![0; (n + 63) / 64])
+        Self(vec![0; (n + Self::M - 1) / Self::M])
     }
 
     fn set(&mut self, pos: usize) {
-        self.0[pos >> 6] |= 1 << (pos & 63);
+        self.0[pos >> Self::BITS] |= 1 << (pos & (Self::M - 1));
     }
 
     fn xor(&mut self, pos: usize) {
-        self.0[pos >> 6] ^= 1 << (pos & 63);
+        self.0[pos >> Self::BITS] ^= 1 << (pos & (Self::M - 1));
     }
 
     fn clear(&mut self) {
