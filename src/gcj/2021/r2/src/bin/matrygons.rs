@@ -1,5 +1,6 @@
 use std::io;
-use std::io::{Write};
+use std::io::Write;
+use std::cmp::max;
 
 /**************************************************
 
@@ -95,72 +96,27 @@ impl Scanner {
 
  *************************************************/
 
+const MAX: usize = 1_000_005;
 
-fn rev_ver(c: u8) -> u8 {
-    if c == b'b' {
-        return b'p';
+fn calc(last_val: usize, need_more: usize, divs: &Vec<Vec<usize>>) -> Option<usize> {
+    if last_val == need_more {
+        return Some(1);
     }
-    if c == b'p' {
-        return b'b';
+    if last_val * 2 <= need_more || last_val > need_more {
+        return None;
     }
-    if c == b'q' {
-        return b'd';
-    }
-    if c == b'd' {
-        return b'q';
-    }
-    return c;
-}
-
-
-fn rev_hor(c: u8) -> u8 {
-    if c == b'b' {
-        return b'd';
-    }
-    if c == b'p' {
-        return b'q';
-    }
-    if c == b'q' {
-        return b'p';
-    }
-    if c == b'd' {
-        return b'b';
-    }
-    return c;
-}
-
-const M: usize = std::usize::MAX;
-
-fn print(out: &mut Vec<u8>, fr: usize, to: usize, rev: bool, prev: &[usize], next: &[usize], s: &Vec<u8>) {
-    if fr >= to {
-        return;
-    }
-    if rev {
-        let c = s[to - 1];
-        if c == b')' {
-            let opened = prev[to - 1];
-            print(out, opened + 1, to - 1, !rev, prev, next, s);
-            print(out, fr, opened, rev, prev, next, s);
-            return;
-        } else if c == b'(' {
-            assert!(false);
-        } else {
-            out.push(rev_hor(c));
-            print(out, fr, to - 1, rev, prev, next, s);
+    let mut res = None;
+    for &d in &divs[last_val] {
+        let check = calc(d, need_more - last_val, &divs);
+        if check != None {
+            if res == None || res.unwrap() < check.unwrap() {
+                res = check;
+            }
         }
-    } else {
-        let c = s[fr];
-        if c == b'(' {
-            let closed = next[fr];
-            print(out, fr + 1, closed, !rev, prev, next, s);
-            print(out, closed + 1, to, rev, prev, next, s);
-            return;
-        } else if c == b')' {
-            assert!(false);
-        } else {
-            out.push(c);
-            print(out, fr + 1, to, rev, prev, next, s);
-        }
+    }
+    match res {
+        None => None,
+        Some(x) => Some(x + 1),
     }
 }
 
@@ -169,35 +125,22 @@ pub fn main() {
     let mut out = std::io::BufWriter::new(stdout.lock());
     let mut sc = Scanner::new();
 
-    let mut s = sc.string();
-    let n = s.len();
-    let mut ver_balance = 0;
-    for i in 0..n {
-        let c = s[i];
-        if c == b'[' || c == b']' {
-            ver_balance ^= 1;
-        }
-        if ver_balance == 1 {
-            s[i] = rev_ver(s[i]);
+    let mut divs = vec![vec![]; MAX];
+    for x in 3..MAX {
+        for y in (x * 2..MAX).step_by(x) {
+            divs[y].push(x);
         }
     }
-    s = s.into_iter().filter(|&c| c != b'[' && c != b']').collect();
-    let mut next = vec![M; n];
-    let mut prev = vec![M; n];
-    let mut stack = vec![];
-    for i in 0..s.len() {
-        let c = s[i];
-        if c == b'(' {
-            stack.push(i);
-        } else if c == b')' {
-            assert!(stack.len() > 0);
-            let last = stack.pop().unwrap();
-            next[last] = i;
-            prev[i] = last;
+    let tc = sc.usize();
+    for t in 0..tc {
+        let n = sc.usize();
+        let mut res = 1;
+        for start in 3..n {
+            let check = calc(start, n, &divs);
+            if let Some(check) = check {
+                res = max(res, check);
+            }
         }
+        writeln!(out, "Case #{}: {}", t + 1, res).unwrap();
     }
-    let mut out_vec = vec![];
-    print(&mut out_vec, 0, s.len(), false, &prev, &next, &s);
-    let s = String::from_utf8(out_vec).unwrap();
-    writeln!(out, "{}", s).unwrap();
 }

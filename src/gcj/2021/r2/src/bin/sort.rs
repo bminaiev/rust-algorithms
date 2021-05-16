@@ -1,5 +1,5 @@
 use std::io;
-use std::io::{Write};
+use std::io::Write;
 
 /**************************************************
 
@@ -96,108 +96,26 @@ impl Scanner {
  *************************************************/
 
 
-fn rev_ver(c: u8) -> u8 {
-    if c == b'b' {
-        return b'p';
-    }
-    if c == b'p' {
-        return b'b';
-    }
-    if c == b'q' {
-        return b'd';
-    }
-    if c == b'd' {
-        return b'q';
-    }
-    return c;
-}
-
-
-fn rev_hor(c: u8) -> u8 {
-    if c == b'b' {
-        return b'd';
-    }
-    if c == b'p' {
-        return b'q';
-    }
-    if c == b'q' {
-        return b'p';
-    }
-    if c == b'd' {
-        return b'b';
-    }
-    return c;
-}
-
-const M: usize = std::usize::MAX;
-
-fn print(out: &mut Vec<u8>, fr: usize, to: usize, rev: bool, prev: &[usize], next: &[usize], s: &Vec<u8>) {
-    if fr >= to {
-        return;
-    }
-    if rev {
-        let c = s[to - 1];
-        if c == b')' {
-            let opened = prev[to - 1];
-            print(out, opened + 1, to - 1, !rev, prev, next, s);
-            print(out, fr, opened, rev, prev, next, s);
-            return;
-        } else if c == b'(' {
-            assert!(false);
-        } else {
-            out.push(rev_hor(c));
-            print(out, fr, to - 1, rev, prev, next, s);
-        }
-    } else {
-        let c = s[fr];
-        if c == b'(' {
-            let closed = next[fr];
-            print(out, fr + 1, closed, !rev, prev, next, s);
-            print(out, closed + 1, to, rev, prev, next, s);
-            return;
-        } else if c == b')' {
-            assert!(false);
-        } else {
-            out.push(c);
-            print(out, fr + 1, to, rev, prev, next, s);
-        }
-    }
-}
-
 pub fn main() {
     let stdout = io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
     let mut sc = Scanner::new();
 
-    let mut s = sc.string();
-    let n = s.len();
-    let mut ver_balance = 0;
-    for i in 0..n {
-        let c = s[i];
-        if c == b'[' || c == b']' {
-            ver_balance ^= 1;
+    let tc = sc.usize();
+    let n = sc.usize();
+    for _ in 0..tc {
+        for start in 0..n - 1 {
+            writeln!(out, "M {} {}", start + 1, n).unwrap();
+            out.flush().unwrap();
+            let min_pos = sc.usize() - 1;
+            if min_pos != start {
+                writeln!(out, "S {} {}", start + 1, min_pos + 1).unwrap();
+                out.flush().unwrap();
+                assert_eq!(sc.usize(), 1);
+            }
         }
-        if ver_balance == 1 {
-            s[i] = rev_ver(s[i]);
-        }
+        writeln!(out, "D").unwrap();
+        out.flush().unwrap();
+        assert_eq!(sc.i32(), 1);
     }
-    s = s.into_iter().filter(|&c| c != b'[' && c != b']').collect();
-    let mut next = vec![M; n];
-    let mut prev = vec![M; n];
-    let mut stack = vec![];
-    for i in 0..s.len() {
-        let c = s[i];
-        if c == b'(' {
-            stack.push(i);
-        } else if c == b')' {
-            assert!(stack.len() > 0);
-            let last = stack.pop().unwrap();
-            next[last] = i;
-            prev[i] = last;
-        }
-    }
-    let mut out_vec = vec![];
-    print(&mut out_vec, 0, s.len(), false, &prev, &next, &s);
-    let s = String::from_utf8(out_vec).unwrap();
-    writeln!(out, "{}", s).unwrap();
 }
