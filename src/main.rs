@@ -67,23 +67,48 @@ impl Scanner {
         (0..n).map(|_| self.next::<T>()).collect()
     }
 
+    fn parse_next_line(&mut self) -> bool {
+        let mut input = String::new();
+        match &mut self.input_source {
+            | InputSource::Stdin => {
+                if std::io::stdin().read_line(&mut input).expect("Failed read") == 0 {
+                    return false;
+                }
+            }
+            | InputSource::FromFile(lines) => {
+                match lines.pop() {
+                    Some(line) => input = line,
+                    None => return false,
+                }
+            }
+        }
+
+        self.buffer = input.split_whitespace().rev().map(String::from).collect();
+        return true;
+    }
+
     fn next<T: std::str::FromStr>(&mut self) -> T {
         loop {
             if let Some(token) = self.buffer.pop() {
                 return token.parse().ok().expect("Failed parse");
             }
-            let mut input = String::new();
-            match &mut self.input_source {
-                | InputSource::Stdin => { std::io::stdin().read_line(&mut input).expect("Failed read"); }
-                | InputSource::FromFile(lines) => {
-                    let line = lines.pop().unwrap();
-                    input = line;
-                }
-            }
 
-            self.buffer = input.split_whitespace().rev().map(String::from).collect();
+            self.parse_next_line();
         }
     }
+
+    #[allow(dead_code)]
+    fn has_more_elements(&mut self) -> bool {
+        loop {
+            if !self.buffer.is_empty() {
+                return true;
+            }
+            if !self.parse_next_line() {
+                return false;
+            }
+        }
+    }
+
 
     #[allow(dead_code)]
     fn string(&mut self) -> Vec<u8> {
