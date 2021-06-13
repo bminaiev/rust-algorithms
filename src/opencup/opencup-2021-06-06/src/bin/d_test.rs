@@ -380,7 +380,7 @@ pub fn main() {
 
         dbg!("test!");
 
-        let n =rnd.next_in_range(1, 6);
+        let n =rnd.next_in_range(1, 16);
 
         let m = rnd.next_in_range(n, n + 10);
         let mut a = vec![vec![]; m];
@@ -438,13 +438,18 @@ pub fn main() {
             }
             // dbg!(bad, ok);
             if bad.len() >= 2 {
-                let some_bad = bad[0];
-                let p1 = state.where_[some_bad][0];
-                let p2 = state.where_[some_bad][1];
+                let mut ok_pos_to_move = vec![];
+                for &one_ok in ok.iter() {
+                    if state.a[state.where_[one_ok][0]][1] == one_ok && state.a[state.where_[one_ok][1]][1] == one_ok {
+                        ok_pos_to_move.push(state.where_[one_ok][0]);
+
+                    }
+                }
+                assert!(ok_pos_to_move.len() >= 2);
                 let empty1 = state.maybe_empty[state.maybe_empty.len() - 1];
                 let empty2 = state.maybe_empty[state.maybe_empty.len() - 2];
-                state.move_(p1, empty1);
-                state.move_(p2, empty2);
+                state.move_(ok_pos_to_move[0], empty1);
+                state.move_(ok_pos_to_move[1], empty2);
             } else {
                 let mut some_ok_pos = 0;
                 let mut found = false;
