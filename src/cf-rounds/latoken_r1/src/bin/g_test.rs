@@ -1,5 +1,6 @@
 use std::io;
 use std::io::Write;
+use std::time::Instant;
 
 /**************************************************
 
@@ -180,10 +181,17 @@ impl Block {
     fn add_point(&mut self, mut pos: i64) {
         pos -= self.pos_shifts;
         self.change += 2;
-        let mut insert_pos = 0;
-        while insert_pos != self.events.len() && self.events[insert_pos].pos < pos {
-            insert_pos += 1;
+        let mut left = 0;
+        let mut right = self.events.len() + 1;
+        while right - left > 1 {
+            let mid = (left + right) / 2;
+            if self.events[mid - 1].pos >= pos {
+                right = mid;
+            } else {
+                left = mid;
+            }
         }
+        let insert_pos = left;
         self.events.insert(insert_pos, Event { pos, change: 2 });
     }
 
@@ -283,24 +291,18 @@ impl Solver {
         unreachable!();
     }
 
-    const BUBEN: usize = 2000;
+    const BUBEN: usize = 3000;
 
     fn relax(&mut self) {
         for i in 0..self.blocks.len() {
             if self.blocks[i].events.len() > Self::BUBEN {
-                let mut v1 = vec![];
-                let mut v2 = vec![];
                 let first_part = self.blocks[i].events.len() / 2;
-                for j in 0..self.blocks[i].events.len() {
-                    if j < first_part {
-                        v1.push(self.blocks[i].events[j]);
-                    } else {
-                        v2.push(self.blocks[i].events[j]);
-                    }
+                let v2 = self.blocks[i].events[first_part..].iter().cloned().collect();
+                while self.blocks[i].events.len() > first_part {
+                    let change = self.blocks[i].events.pop().unwrap().change;
+                    self.blocks[i].change -= change;
                 }
                 let pos_shifts = self.blocks[i].pos_shifts;
-                self.blocks.remove(i);
-                self.blocks.insert(i, Block::create(v1, pos_shifts));
                 self.blocks.insert(i + 1, Block::create(v2, pos_shifts));
             }
         }
@@ -312,11 +314,13 @@ pub fn main() {
     let mut out = std::io::BufWriter::new(stdout.lock());
     let mut sc = Scanner::new();
 
+
+    let start_time = Instant::now();
     let mut rnd = Random::new(787788);
     let n = 800000;
     let mut a: Vec<_> = (0..n).map(|_| {
         let x = rnd.next_in_range(0, 1_000_000_000) as i64;
-        let y = rnd.next_in_range(0, 1_000_000_000) as i64;
+        let y = rnd.next_in_range(990_000_000, 1_000_000_000) as i64;
         Point { sum: x + y, x, y }
     }).collect();
     a.sort();
@@ -331,5 +335,7 @@ pub fn main() {
         solver.add_point(p.x);
         solver.relax();
     }
+    dbg!(solver.blocks.len());
     writeln!(out, "{}", solver.get_ans()).unwrap();
+    dbg!(start_time.elapsed().as_millis());
 }
