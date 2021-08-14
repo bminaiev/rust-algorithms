@@ -129,26 +129,17 @@ pub fn main() {
 
     let tc = sc.usize();
     for _ in 0..tc {
-        let s = sc.next::<String>();
-        let t = sc.next::<String>();
+        let s = sc.string();
+        let t = sc.string();
         let mut ok = false;
-        for start in 0..s.len() {
-            for l1 in 1..=t.len() {
-                if start + l1 > s.len() {
-                    break;
-                }
-                let l2 = t.len() - l1;
-                if l2 >= start + l1 {
-                    continue;
-                }
-                let first = &s[start..start + l1];
-                let second = &s[start + l1 - l2 - 1..start + l1 - 1];
-                assert_eq!(second.len(), l2);
-                let second: String = second.chars().rev().collect();
-                let full = first.to_owned() + &*second.to_owned();
-                assert_eq!(full.len(), t.len());
-                if full == t {
-                    ok = true;
+        for mid in 0..s.len() {
+            for l1 in 0..=mid + 1 {
+                for l2 in 0..=mid {
+                    if l1 + l2 == t.len() {
+                        if s[mid + 1 - l1..=mid].iter().chain(s[mid - l2..mid].iter().rev()).eq(t.iter()) {
+                            ok = true;
+                        }
+                    }
                 }
             }
         }
