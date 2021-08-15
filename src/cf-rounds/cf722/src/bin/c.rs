@@ -154,15 +154,15 @@ fn calc_times(s: &mut State, g: &Graph, v: usize) {
 
 fn dfs1(s: &mut State, g: &Graph, v: usize) {
     let cur_node = Node { tin: s.tin[v], v };
-    let child = s.nodes.range(cur_node..).next().and_then(|node|
+    let has_child = s.nodes.range(cur_node..).next().and_then(|node|
         if s.tout[v] >= s.tout[node.v] {
             Some(node.v)
         } else {
             None
         }
-    );
+    ).is_some();
     let mut parent = None;
-    if child.is_none() {
+    if !has_child {
         parent = s.nodes.range(..cur_node).next_back().and_then(|node|
             if s.tout[node.v] >= s.tout[v] {
                 Some(node.clone())
@@ -181,7 +181,7 @@ fn dfs1(s: &mut State, g: &Graph, v: usize) {
         dfs1(s, g, to);
     }
 
-    if child.is_none() {
+    if !has_child {
         s.nodes.remove(&cur_node);
         if let Some(parent) = parent {
             s.nodes.insert(parent);
