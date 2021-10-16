@@ -150,3 +150,33 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
         }
     }
 }
+
+/**
+
+Example of Node:
+
+#[derive(Clone, Default)]
+struct Hash {
+    sum: i32,
+    len: usize,
+}
+
+impl LazySegTreeNodeSpec for Hash {
+    type Update = i32;
+
+    fn unite(l: &Self, r: &Self) -> Self {
+        Self { sum : l.sum + r.sum, len: l.len + r.len }
+    }
+
+    fn apply_update(node: &mut Self, update: &Self::Update) {
+        node.sum = *update;
+        node.len = 1;
+    }
+
+    fn join_updates(current: &mut Self::Update, add: &Self::Update) {}
+}
+
+
+let mut seg_tree = LazySegTree::new(&Hash { sum: 0, len: 1 }, n);
+
+*/
