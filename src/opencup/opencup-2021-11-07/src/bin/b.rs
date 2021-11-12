@@ -187,52 +187,9 @@ fn solve(a: &[Point], r: f64) -> f64 {
 
     let n = a.len();
 
-    const BUBEN: usize = 300;
-
     let start = Instant::now();
 
-
-    let mut angles = vec![0.0; BUBEN];
-    for i in 0..BUBEN {
-        angles[i] = std::f64::consts::PI * 2.0 * i as f64 / (BUBEN as f64) + 1.23;
-    }
-    let mut pts = vec![vec![Point::default(); BUBEN]; n];
-    for i in 0..n {
-        for j in 0..BUBEN {
-            pts[i][j] = calc(a[i], angles[j], r);
-        }
-    }
-    let mut dp = vec![vec![f64::MAX; BUBEN]; n];
-    for i in 0..BUBEN {
-        dp[0][i] = 0.0;
-    }
-    let mut prev = vec![vec![0; BUBEN]; n];
-    for i in 0..(n - 1) {
-        for j in 0..BUBEN {
-            for k in 0..BUBEN {
-                let d = pts[i][j].dist(pts[i + 1][k]);
-                let nd = dp[i][j] + d;
-                if dp[i + 1][k] > nd {
-                    dp[i + 1][k] = nd;
-                    prev[i + 1][k] = j;
-                }
-            }
-        }
-    }
-    let mut best_id = 0;
-    for i in 0..BUBEN {
-        if dp[n - 1][i] < dp[n - 1][best_id] {
-            best_id = i;
-        }
-    }
-
     let mut answers = vec![0.0; n];
-    answers[n - 1] = angles[best_id];
-    for i in (1..n).rev() {
-        let prev_best_id = prev[i][best_id];
-        answers[i - 1] = angles[prev_best_id];
-        best_id = prev_best_id;
-    }
 
     let mut change = std::f64::consts::PI;
     let mut iter = 0;
