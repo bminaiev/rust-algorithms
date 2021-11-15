@@ -3,9 +3,9 @@ use std::io::Write;
 
 /**************************************************
 
-    START OF TEMPLATE CODE
+   START OF TEMPLATE CODE
 
- *************************************************/
+*************************************************/
 #[allow(unused_macros)]
 macro_rules! dbg {
     ($first_val:expr, $($val:expr),+ $(,)?) => {
@@ -30,11 +30,13 @@ struct Scanner {
     input_source: InputSource,
 }
 
-
 impl Scanner {
     #[allow(dead_code)]
     fn new() -> Self {
-        Self { buffer: vec![], input_source: InputSource::Stdin }
+        Self {
+            buffer: vec![],
+            input_source: InputSource::Stdin,
+        }
     }
 
     #[allow(dead_code)]
@@ -42,9 +44,11 @@ impl Scanner {
         let file = std::fs::read_to_string(filename).unwrap();
         let mut lines: Vec<String> = file.lines().map(|line| String::from(line)).collect();
         lines.reverse();
-        Self { buffer: vec![], input_source: InputSource::FromFile(lines) }
+        Self {
+            buffer: vec![],
+            input_source: InputSource::FromFile(lines),
+        }
     }
-
 
     #[allow(dead_code)]
     fn i64(&mut self) -> i64 {
@@ -69,17 +73,15 @@ impl Scanner {
     fn parse_next_line(&mut self) -> bool {
         let mut input = String::new();
         match &mut self.input_source {
-            | InputSource::Stdin => {
+            InputSource::Stdin => {
                 if std::io::stdin().read_line(&mut input).expect("Failed read") == 0 {
                     return false;
                 }
             }
-            | InputSource::FromFile(lines) => {
-                match lines.pop() {
-                    Some(line) => input = line,
-                    None => return false,
-                }
-            }
+            InputSource::FromFile(lines) => match lines.pop() {
+                Some(line) => input = line,
+                None => return false,
+            },
         }
 
         self.buffer = input.split_whitespace().rev().map(String::from).collect();
@@ -108,13 +110,11 @@ impl Scanner {
         }
     }
 
-
     #[allow(dead_code)]
     fn string(&mut self) -> Vec<u8> {
         self.next::<String>().into_bytes()
     }
 }
-
 
 struct BitRevIterator {
     a: usize,
@@ -147,7 +147,14 @@ impl Iterator for BitRevIterator {
 
 #[allow(clippy::upper_case_acronyms)]
 pub trait FFT: Sized + Copy {
-    type F: Sized + Copy + From<Self> + Neg + Add<Output=Self::F> + Div<Output=Self::F> + Mul<Output=Self::F> + Sub<Output=Self::F>;
+    type F: Sized
+        + Copy
+        + From<Self>
+        + Neg
+        + Add<Output = Self::F>
+        + Div<Output = Self::F>
+        + Mul<Output = Self::F>
+        + Sub<Output = Self::F>;
 
     const ZERO: Self;
 
@@ -155,7 +162,6 @@ pub trait FFT: Sized + Copy {
     fn get_factor(n: usize, inverse: bool) -> Self::F;
     fn extract(f: Self::F) -> Self;
 }
-
 
 pub use std::f64::consts::PI;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
@@ -373,7 +379,6 @@ impl<const M: i64> Modulo<M> {
         self.pow(M as u64 - 2)
     }
 
-
     fn from_small(s: i64) -> Self {
         let val = if s < 0 { s + M } else { s };
         Self { val }
@@ -511,7 +516,10 @@ impl Add for &Matrix {
     type Output = Matrix;
     fn add(self, other: Self) -> Matrix {
         let self_iter = self.inner.iter();
-        let inner = self_iter.zip(other.inner.iter()).map(|(&u, &v)| u + v).collect();
+        let inner = self_iter
+            .zip(other.inner.iter())
+            .map(|(&u, &v)| u + v)
+            .collect();
         Matrix {
             cols: self.cols,
             inner,
@@ -523,7 +531,10 @@ impl Sub for &Matrix {
     type Output = Matrix;
     fn sub(self, other: Self) -> Matrix {
         let self_iter = self.inner.iter();
-        let inner = self_iter.zip(other.inner.iter()).map(|(&u, &v)| u - v).collect();
+        let inner = self_iter
+            .zip(other.inner.iter())
+            .map(|(&u, &v)| u - v)
+            .collect();
         Matrix {
             cols: self.cols,
             inner,
@@ -624,7 +635,6 @@ mod test {
     }
 }
 
-
 impl FFT for f64 {
     type F = Complex;
 
@@ -632,7 +642,9 @@ impl FFT for f64 {
 
     fn get_roots(n: usize, inverse: bool) -> Vec<Self::F> {
         let step = if inverse { -2.0 } else { 2.0 } * PI / n as f64;
-        (0..n / 2).map(|i| Complex::from_polar(1.0, step * i as f64)).collect()
+        (0..n / 2)
+            .map(|i| Complex::from_polar(1.0, step * i as f64))
+            .collect()
     }
 
     fn get_factor(n: usize, inverse: bool) -> Self::F {
@@ -644,6 +656,7 @@ impl FFT for f64 {
     }
 }
 
+// sdfdsf
 impl FFT for i64 {
     type F = CommonField;
 
@@ -686,7 +699,9 @@ pub fn fft<T: FFT>(v: &[T::F], inverse: bool) -> Vec<T::F> {
 
     let factor = T::get_factor(n, inverse);
     let roots_of_unity = T::get_roots(n, inverse);
-    let mut dft = BitRevIterator::new(n).map(|i| v[i] * factor).collect::<Vec<_>>();
+    let mut dft = BitRevIterator::new(n)
+        .map(|i| v[i] * factor)
+        .collect::<Vec<_>>();
 
     for m in (0..).map(|s| 1 << s).take_while(|&m| m < n) {
         for k in (0..n).step_by(2 * m) {
@@ -705,7 +720,13 @@ pub fn fft<T: FFT>(v: &[T::F], inverse: bool) -> Vec<T::F> {
 pub fn dft_from_reals<T: FFT>(v: &[T], desired_len: usize) -> Vec<T::F> {
     assert!(v.len() <= desired_len);
 
-    let complex_v = v.iter().cloned().chain(std::iter::repeat(T::ZERO)).take(desired_len.next_power_of_two()).map(T::F::from).collect::<Vec<_>>();
+    let complex_v = v
+        .iter()
+        .cloned()
+        .chain(std::iter::repeat(T::ZERO))
+        .take(desired_len.next_power_of_two())
+        .map(T::F::from)
+        .collect::<Vec<_>>();
     fft::<T>(&complex_v, false)
 }
 
@@ -714,7 +735,11 @@ pub fn idft_to_reals<T: FFT>(dft_v: &[T::F], desired_len: usize) -> Vec<T> {
     assert!(dft_v.len() >= desired_len);
 
     let complex_v = fft::<T>(dft_v, true);
-    complex_v.into_iter().take(desired_len).map(T::extract).collect()
+    complex_v
+        .into_iter()
+        .take(desired_len)
+        .map(T::extract)
+        .collect()
 }
 
 /// Given two polynomials (vectors) sum_i a[i] x^i and sum_i b[i] x^i,
@@ -730,10 +755,9 @@ pub fn convolution<T: FFT>(a: &[T], b: &[T]) -> Vec<T> {
 
 /**************************************************
 
-    END OF TEMPLATE CODE
+   END OF TEMPLATE CODE
 
- *************************************************/
-
+*************************************************/
 
 const WALL: u8 = b'#';
 const EMPTY: u8 = b'.';
@@ -799,13 +823,16 @@ pub fn main() {
 
     let mut res = vec![];
 
-    const EPS : f64 = 0.5;
+    const EPS: f64 = 0.5;
 
     for i in 0..=(n - a) {
         for j in 0..=(m - b) {
             let pos = 2 * m * (n - 1 + i) + (m - 1 + j);
             if sum1[pos] + sum2[pos] <= EPS {
-                res.push(Pos { row: i + 1, col: j + 1 });
+                res.push(Pos {
+                    row: i + 1,
+                    col: j + 1,
+                });
             }
         }
     }
