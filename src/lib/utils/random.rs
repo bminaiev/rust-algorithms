@@ -1,10 +1,10 @@
 #[allow(dead_code)]
 struct Random {
-    state: usize
+    state: u64,
 }
 
 impl Random {
-    fn next(&mut self) -> usize {
+    fn next(&mut self) -> u64 {
         let mut x = self.state;
         x ^= x << 13;
         x ^= x >> 7;
@@ -16,7 +16,7 @@ impl Random {
     #[allow(dead_code)]
     fn next_in_range(&mut self, from: usize, to: usize) -> usize {
         assert!(from < to);
-        from + self.next() % (to - from)
+        (from as u64 + self.next() % ((to - from) as u64)) as usize
     }
 
     #[allow(dead_code)]
@@ -25,11 +25,9 @@ impl Random {
     }
 
     #[allow(dead_code)]
-    fn new(seed: usize) -> Self {
+    fn new(seed: u64) -> Self {
         assert_ne!(seed, 0);
-        Self {
-            state: seed,
-        }
+        Self { state: seed }
     }
 }
 
@@ -58,7 +56,7 @@ mod tests {
     #[test]
     fn double_mid() {
         let mut rnd = Random::new(787788);
-        const CNT : usize = 10_000;
+        const CNT: usize = 10_000;
         let mut sum = 0.0;
         for _ in 0..CNT {
             let val = rnd.next_double();
