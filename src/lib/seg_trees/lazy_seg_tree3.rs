@@ -1,10 +1,11 @@
 pub trait LazySegTreeNodeSpec: Clone + Default {
-    fn unite(l: &Self, r: &Self) -> Self;
+    fn unite(l: &Self, r: &Self, context: &Self::Context) -> Self;
 
     fn apply_update(node: &mut Self, update: &Self::Update);
     fn join_updates(current: &mut Self::Update, add: &Self::Update);
 
     type Update: Clone;
+    type Context;
 }
 
 #[allow(unused)]
@@ -12,11 +13,12 @@ pub struct LazySegTree<T: LazySegTreeNodeSpec> {
     n: usize,
     tree: Vec<T>,
     updates_to_push: Vec<Option<T::Update>>,
+    context: T::Context,
 }
 
 #[allow(unused)]
 impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
-    pub(crate) fn new(init_val: &T, n: usize) -> Self {
+    pub(crate) fn new(init_val: &T, n: usize, context: T::Context) -> Self {
         assert!(n > 0);
         let tree = vec![T::default(); 2 * n - 1];
         let updates_to_push = vec![None; 2 * n - 1];
@@ -24,13 +26,14 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
             n,
             tree,
             updates_to_push,
+            context,
         };
         res.build(0, 0, n, init_val);
         res
     }
 
     fn pull(&mut self, v: usize, vr: usize) {
-        self.tree[v] = T::unite(&self.tree[v + 1], &self.tree[vr]);
+        self.tree[v] = T::unite(&self.tree[v + 1], &self.tree[vr], &self.context);
     }
 
     fn build(&mut self, v: usize, l: usize, r: usize, init_val: &T) {
@@ -75,6 +78,7 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
                 T::unite(
                     &self.get_(v + 1, l, m, ql, qr),
                     &self.get_(vr, m, r, ql, qr),
+                    &self.context,
                 )
             }
         };
@@ -125,7 +129,7 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
         self.get_(0, 0, self.n, ql, qr)
     }
 
-    pub(crate) fn new_f(n: usize, f: &dyn Fn(usize) -> T) -> Self {
+    pub(crate) fn new_f(n: usize, f: &dyn Fn(usize) -> T, context: T::Context) -> Self {
         assert!(n > 0);
         let tree = vec![T::default(); 2 * n - 1];
         let updates_to_push = vec![None; 2 * n - 1];
@@ -133,6 +137,7 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
             n,
             tree,
             updates_to_push,
+            context,
         };
         res.build_f(0, 0, n, f);
         res
@@ -150,33 +155,3 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
         }
     }
 }
-
-/*
-
-Example of Node:
-
-#[derive(Clone, Default)]
-struct Hash {
-    sum: i32,
-    len: usize,
-}
-
-impl LazySegTreeNodeSpec for Hash {
-    type Update = i32;
-
-    fn unite(l: &Self, r: &Self) -> Self {
-        Self { sum : l.sum + r.sum, len: l.len + r.len }
-    }
-
-    fn apply_update(node: &mut Self, update: &Self::Update) {
-        node.sum = *update;
-        node.len = 1;
-    }
-
-    fn join_updates(current: &mut Self::Update, add: &Self::Update) {}
-}
-
-
-let mut seg_tree = LazySegTree::new(&Hash { sum: 0, len: 1 }, n);
-
-*/

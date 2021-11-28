@@ -9,7 +9,8 @@ fn max_val() {
     }
 
     impl LazySegTreeNodeSpec for MaxValNode {
-        fn unite(l: &Self, r: &Self) -> Self {
+        #[allow(unused)]
+        fn unite(l: &Self, r: &Self, context: &()) -> Self {
             if l.max_val > r.max_val {
                 *l
             } else {
@@ -27,10 +28,11 @@ fn max_val() {
         }
 
         type Update = i32;
+        type Context = ();
     }
 
     let n = 5;
-    let mut seg_tree = LazySegTree::new_f(n, &|pos| MaxValNode { max_val: 0, pos });
+    let mut seg_tree = LazySegTree::new_f(n, &|pos| MaxValNode { max_val: 0, pos }, ());
     seg_tree.modify(2, 3, 123);
     let res = seg_tree.get(0, 5);
     println!("res = {:?}", res);
