@@ -151,7 +151,7 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
     }
 }
 
-/**
+/*
 
 Example of Node:
 
