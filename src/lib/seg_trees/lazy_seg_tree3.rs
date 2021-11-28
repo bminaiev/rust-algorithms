@@ -1,4 +1,4 @@
-trait LazySegTreeNodeSpec: Clone + Default {
+pub trait LazySegTreeNodeSpec: Clone + Default {
     fn unite(l: &Self, r: &Self) -> Self;
 
     fn apply_update(node: &mut Self, update: &Self::Update);
@@ -8,7 +8,7 @@ trait LazySegTreeNodeSpec: Clone + Default {
 }
 
 #[allow(unused)]
-struct LazySegTree<T: LazySegTreeNodeSpec> {
+pub struct LazySegTree<T: LazySegTreeNodeSpec> {
     n: usize,
     tree: Vec<T>,
     updates_to_push: Vec<Option<T::Update>>,
@@ -16,7 +16,7 @@ struct LazySegTree<T: LazySegTreeNodeSpec> {
 
 #[allow(unused)]
 impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
-    fn new(init_val: &T, n: usize) -> Self {
+    pub(crate) fn new(init_val: &T, n: usize) -> Self {
         assert!(n > 0);
         let tree = vec![T::default(); 2 * n - 1];
         let updates_to_push = vec![None; 2 * n - 1];
@@ -125,7 +125,7 @@ impl<T: LazySegTreeNodeSpec> LazySegTree<T> {
         self.get_(0, 0, self.n, ql, qr)
     }
 
-    fn new_f(n: usize, f: &dyn Fn(usize) -> T) -> Self {
+    pub(crate) fn new_f(n: usize, f: &dyn Fn(usize) -> T) -> Self {
         assert!(n > 0);
         let tree = vec![T::default(); 2 * n - 1];
         let updates_to_push = vec![None; 2 * n - 1];

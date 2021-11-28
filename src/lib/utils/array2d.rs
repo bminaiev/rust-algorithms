@@ -9,6 +9,7 @@ impl<T> Array2D<T>
 where
     T: Clone,
 {
+    #[allow(unused)]
     fn new(empty: T, n: usize, m: usize) -> Self {
         Self {
             m,

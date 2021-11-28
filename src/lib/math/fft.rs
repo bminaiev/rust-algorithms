@@ -1,7 +1,7 @@
 use std::ops::{Mul, MulAssign, Add, Sub};
 
 #[derive(Copy, Clone)]
-struct Complex {
+pub struct Complex {
     real: f64,
     imag: f64,
 }
